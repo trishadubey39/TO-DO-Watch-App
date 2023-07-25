@@ -5,65 +5,154 @@
  */
 
 package com.example.to_do_watch_app.presentation
-
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
+import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import com.example.to_do_watch_app.R
-import com.example.to_do_watch_app.presentation.theme.TODOWatchAppTheme
+import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.Scaffold
+import androidx.wear.tiles.material.Text
+import com.example.to_do_watch_app.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            WearApp("Android")
+            MainActivityContent(viewModel = viewModel, context = this)
         }
     }
 }
 
 @Composable
-fun WearApp(greetingName: String) {
-    TODOWatchAppTheme {
-        /* If you have enough items in your list, use [ScalingLazyColumn] which is an optimized
-         * version of LazyColumn for wear devices with some added features. For more information,
-         * see d.android.com/wear/compose.
-         */
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Greeting(greetingName = greetingName)
-        }
-    }
-}
+fun MainActivityContent(viewModel: MainViewModel,context: Context) {
+    val alarmTime by viewModel.alarmTime.collectAsState()
 
-@Composable
-fun Greeting(greetingName: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Wear OS Alarm") }
+            )
+        },
+        content = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                TimePicker(
+                    selectedHour = alarmTime?.first ?: 9,
+                    selectedMinute = alarmTime?.second ?: 0,
+                    onTimeSelected = { hour, minute ->
+                        viewModel.setAlarmTime(hour, minute)
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                NumberPicker(
+                    value = alarmTime?.first ?: 9,
+                    onValueChange = { hour ->
+                        viewModel.setAlarmTime(hour, alarmTime?.second ?: 0)
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                NumberPicker(
+                    value = alarmTime?.second ?: 0,
+                    onValueChange = { minute ->
+                        viewModel.setAlarmTime(alarmTime?.first ?: 9, minute)
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { viewModel.setAlarm(context) },
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text(text = "Set Alarm")
+                }
+            }
+        }
     )
 }
 
-@Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
+@Composable
+fun TimePicker(
+    selectedHour: Int,
+    selectedMinute: Int,
+    onTimeSelected: (Int, Int) -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        NumberPicker(
+            value = selectedHour,
+            onValueChange = { hour ->
+                onTimeSelected(hour, selectedMinute)
+            }
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        NumberPicker(
+            value = selectedMinute,
+            onValueChange = { minute ->
+                onTimeSelected(selectedHour, minute)
+            }
+        )
+    }
+}
+
+@Composable
+fun NumberPicker(
+    value: Int,
+    onValueChange: (Int) -> Unit
+) {
+    val numbers = (0..59).toList()
+
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        for (number in numbers) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(4.dp)
+                    .clickable {
+                        onValueChange(number)
+                    }
+                    .selectable(
+                        selected = (number == value),
+                        onClick = { onValueChange(number) }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = number.toString(),
+                    color = if (number == value) Color.White else Color.Black
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    WearApp("Preview Android")
+//    MainActivityContent(viewModel = MainViewModel(), context = Context)
 }

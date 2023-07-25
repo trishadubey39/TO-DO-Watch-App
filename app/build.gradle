@@ -60,8 +60,10 @@ dependencies {
     implementation "androidx.wear.compose:compose-foundation:$wear_compose_version"
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
     implementation 'androidx.activity:activity-compose:1.5.1'
+    implementation 'androidx.wear.tiles:tiles-material:1.1.0'
     androidTestImplementation platform('androidx.compose:compose-bom:2022.10.00')
     androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+    implementation "androidx.compose.material:material:1.4.3"
 }
